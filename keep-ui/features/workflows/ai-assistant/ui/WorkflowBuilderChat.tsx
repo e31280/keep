@@ -146,11 +146,11 @@ export function WorkflowBuilderChat({
           </ScrollArea>
         </CardContent>
         <div className="border-t p-4">
-          {validationErrors && validationErrors.length > 0 && (
+          {validationErrors && Object.keys(validationErrors).length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
-              {validationErrors.map((error, idx) => (
-                <Badge key={idx} variant="destructive">
-                  {error}
+              {Object.entries(validationErrors).map(([key, error]) => (
+                <Badge key={key} variant="destructive">
+                  {typeof error === 'string' ? error : error.message || key}
                 </Badge>
               ))}
             </div>
