@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/button-shadcn";
 import { StepPreview } from "./StepPreview";
 import { SuggestionResult, SuggestionStatus } from "./SuggestionStatus";
 import clsx from "clsx";
@@ -110,10 +110,10 @@ export const AddStepUI = ({
         </div>
       </div>
       <div className="flex gap-2">
-        <Button color="orange" variant="primary" onClick={onAdd}>
+        <Button variant="primary" onClick={onAdd}>
           Add (⌘+Enter)
         </Button>
-        <Button color="orange" variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           No
         </Button>
       </div>
