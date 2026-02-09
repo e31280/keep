@@ -59,7 +59,7 @@ export function WorkflowBuilderChat({
 
   const [debugInfoVisible, setDebugInfoVisible] = useState(false);
 
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+  const handleFormSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
     handleSubmit(e);
@@ -148,11 +148,15 @@ export function WorkflowBuilderChat({
         <div className="border-t p-4">
           {validationErrors && Object.keys(validationErrors).length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
-              {Object.entries(validationErrors).map(([key, error]) => (
-                <Badge key={key} variant="destructive">
-                  {typeof error === 'string' ? error : error.message || key}
-                </Badge>
-              ))}
+              {Object.entries(validationErrors).map(([key, error]) => {
+                // error is a tuple: [message, severity]
+                const errorMessage = Array.isArray(error) ? error[0] : String(error);
+                return (
+                  <Badge key={key} variant="destructive">
+                    {errorMessage}
+                  </Badge>
+                );
+              })}
             </div>
           )}
           <form onSubmit={handleFormSubmit} className="flex gap-2">
@@ -164,7 +168,9 @@ export function WorkflowBuilderChat({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleFormSubmit(e as any);
+                  const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                  Object.defineProperty(formEvent, 'target', { value: e.currentTarget.form, writable: false });
+                  handleFormSubmit(formEvent as unknown as React.FormEvent<HTMLFormElement>);
                 }
               }}
             />

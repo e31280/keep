@@ -21,6 +21,9 @@ import {
 import { PageTitle } from "@/shared/ui";
 import { AIConfig } from "./model";
 
+// Helper to check if a setting is a numeric type
+const isNumericSetting = (type: string) => type === "float" || type === "int";
+
 function RangeInputWithLabel({
   setting,
   onChange,
@@ -178,10 +181,10 @@ export function AIPlugins() {
                               </p>
                             </div>
                           </div>
-                          {(setting.type === "float" || setting.type === "int") ? (
+                          {isNumericSetting(setting.type) && (
                             <div className="w-full mt-2">
                               <RangeInputWithLabel
-                                key={setting.value}
+                                key={String(setting.value)}
                                 setting={setting}
                                 onChange={(newValue) => {
                                   setting.value = newValue;
@@ -192,7 +195,7 @@ export function AIPlugins() {
                                 }}
                               />
                             </div>
-                          ) : null}
+                          )}
                           {setting !== algorithm_config.settings[algorithm_config.settings.length - 1] && (
                             <Separator className="my-2" />
                           )}
