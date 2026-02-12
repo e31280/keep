@@ -157,11 +157,14 @@ DATABASE_CONNECTION_STRING=mysql+pymysql://root:@doris-fe:9030/keep
 | File | Change |
 |------|--------|
 | `docs/deployment/database-migration-doris-clickhouse.md` | This analysis document |
-| `keep/api/core/db_utils.py` | Doris-aware engine creation with MySQL protocol fallback |
+| `keep/api/core/db_utils.py` | `is_doris()` helper, `get_aggreated_field()` Doris branch (GROUP_CONCAT) |
 | `docker-compose-with-doris.yml` | Docker Compose for Doris local development |
-| `keep/api/core/db.py` | Minor: Doris-specific handling for `JSON_TABLE` and index hints |
-| `keep/api/core/cel_to_sql/sql_providers/get_cel_to_sql_provider_for_dialect.py` | Doris dialect mapping |
-| `keep/api/core/facets_query_builder/get_facets_query_builder.py` | Doris dialect mapping |
+| `keep/api/core/db.py` | Doris-specific handling: `JSON_TABLE` → `LATERAL VIEW`, skip `FORCE INDEX`, `filter_query` uses `JSON_CONTAINS` instead of `json_overlaps` |
+| `keep/api/core/cel_to_sql/sql_providers/doris.py` | New: `CelToDorisProvider` (inherits MySQL, extensible for Doris differences) |
+| `keep/api/core/cel_to_sql/sql_providers/get_cel_to_sql_provider_for_dialect.py` | Route Doris to `CelToDorisProvider` |
+| `keep/api/core/facets_query_builder/doris.py` | New: `DorisFacetsQueryBuilder` (uses `json_each` instead of `JSON_TABLE`, no `utf8mb4_0900_ai_ci` collation) |
+| `keep/api/core/facets_query_builder/get_facets_query_builder.py` | Route Doris to `DorisFacetsQueryBuilder` |
+| `tests/test_doris_support.py` | 12 unit tests covering all Doris-specific branches |
 
 ## Risk Assessment
 

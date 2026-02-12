@@ -3813,7 +3813,16 @@ def filter_query(session: Session, query, field, value):
     if session.bind.dialect.name in ["mysql", "postgresql"]:
         if isinstance(value, list):
             if session.bind.dialect.name == "mysql":
-                query = query.filter(func.json_overlaps(field, func.json_array(value)))
+                if is_doris():
+                    # Doris does not support json_overlaps; fall back to
+                    # OR-chained JSON_CONTAINS for each list element.
+                    conditions = [
+                        func.json_contains(field, json.dumps(v))
+                        for v in value
+                    ]
+                    query = query.filter(or_(*conditions))
+                else:
+                    query = query.filter(func.json_overlaps(field, func.json_array(value)))
             else:
                 query = query.filter(col(field).op("?|")(func.array(value)))
 

@@ -202,6 +202,9 @@ def get_aggreated_field(session: Session, column_name: str, alias: str):
     if session.bind.dialect.name == "postgresql":
         return func.array_agg(column_name).label(alias)
     elif session.bind.dialect.name == "mysql":
+        if is_doris():
+            # Doris does not support json_arrayagg; use GROUP_CONCAT instead
+            return func.group_concat(column_name).label(alias)
         return func.json_arrayagg(column_name).label(alias)
     elif session.bind.dialect.name == "sqlite":
         return func.group_concat(column_name).label(alias)
