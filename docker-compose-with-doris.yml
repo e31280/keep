@@ -47,6 +47,9 @@ services:
     environment:
       - AUTH_TYPE=NO_AUTH
       - DATABASE_CONNECTION_STRING=mysql+pymysql://root:@keep-doris-fe:9030/keep
+      - KEEP_DATABASE_TYPE=doris
+      # Doris does not support Alembic migrations; create the schema manually.
+      # See docs/deployment/database-migration-doris-clickhouse.md for details.
       - SKIP_DB_CREATION=true
     volumes:
       - ./state:/state
