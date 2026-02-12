@@ -28,6 +28,16 @@ from keep.api.core.config import config
 
 logger = logging.getLogger(__name__)
 
+# Apache Doris connects via MySQL protocol (mysql+pymysql://), so
+# engine.dialect.name returns "mysql".  Set KEEP_DATABASE_TYPE=doris to
+# activate Doris-specific query branches (e.g. skip JSON_TABLE / FORCE INDEX).
+KEEP_DATABASE_TYPE = config("KEEP_DATABASE_TYPE", default="auto")
+
+
+def is_doris() -> bool:
+    """Return True when the configured database is Apache Doris."""
+    return KEEP_DATABASE_TYPE.lower() == "doris"
+
 
 def __get_conn() -> pymysql.connections.Connection:
     """
