@@ -53,6 +53,7 @@ from keep.api.core.db_utils import (
     custom_serialize,
     get_json_extract_field,
     get_or_create,
+    is_doris,
 )
 from keep.api.core.dependencies import SINGLE_TENANT_UUID
 
@@ -2924,8 +2925,8 @@ def is_linked_provider(tenant_id: str, provider_id: str) -> bool:
     with Session(engine) as session:
         query = session.query(Alert.provider_id)
 
-        # Add FORCE INDEX hint only for MySQL
-        if engine.dialect.name == "mysql":
+        # Add FORCE INDEX hint only for MySQL (not supported by Apache Doris)
+        if engine.dialect.name == "mysql" and not is_doris():
             query = query.with_hint(Alert, "FORCE INDEX (idx_alert_tenant_provider)")
 
         linked_provider = (
@@ -3681,6 +3682,30 @@ def get_incidents_meta_for_tenant(tenant_id: str) -> dict:
                 "services": list(filter(bool, json.loads(results.affected_services))),
             }
 
+        elif session.bind.dialect.name == "mysql" and is_doris():
+            # Apache Doris does not support JSON_TABLE; use raw SQL with
+            # explode_json_array_string via LATERAL VIEW instead.
+            raw = text(
+                "SELECT "
+                "GROUP_CONCAT(DISTINCT assignee) AS assignees, "
+                "GROUP_CONCAT(DISTINCT src) AS sources, "
+                "GROUP_CONCAT(DISTINCT svc) AS services "
+                "FROM incident "
+                "LATERAL VIEW explode_json_array_string(sources) tmp1 AS src "
+                "LATERAL VIEW explode_json_array_string(affected_services) tmp2 AS svc "
+                "WHERE tenant_id = :tid AND is_visible = 1"
+            )
+            results = session.exec(raw, params={"tid": tenant_id}).one_or_none()
+
+            if not results:
+                return {}
+
+            return {
+                "assignees": results.assignees.split(",") if results.assignees else [],
+                "sources": results.sources.split(",") if results.sources else [],
+                "services": results.services.split(",") if results.services else [],
+            }
+
         elif session.bind.dialect.name == "mysql":
 
             sources_join = func.json_table(
@@ -3788,7 +3813,16 @@ def filter_query(session: Session, query, field, value):
     if session.bind.dialect.name in ["mysql", "postgresql"]:
         if isinstance(value, list):
             if session.bind.dialect.name == "mysql":
-                query = query.filter(func.json_overlaps(field, func.json_array(value)))
+                if is_doris():
+                    # Doris does not support json_overlaps; fall back to
+                    # OR-chained JSON_CONTAINS for each list element.
+                    conditions = [
+                        func.json_contains(field, json.dumps(v))
+                        for v in value
+                    ]
+                    query = query.filter(or_(*conditions))
+                else:
+                    query = query.filter(func.json_overlaps(field, func.json_array(value)))
             else:
                 query = query.filter(col(field).op("?|")(func.array(value)))
 

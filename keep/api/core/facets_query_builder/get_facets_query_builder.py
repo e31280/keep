@@ -3,9 +3,11 @@ from keep.api.core.cel_to_sql.sql_providers.get_cel_to_sql_provider_for_dialect 
     get_cel_to_sql_provider,
 )
 from keep.api.core.db import engine
+from keep.api.core.db_utils import is_doris
 from keep.api.core.facets_query_builder.base_facets_query_builder import (
     BaseFacetsQueryBuilder,
 )
+from keep.api.core.facets_query_builder.doris import DorisFacetsQueryBuilder
 from keep.api.core.facets_query_builder.mysql import MySqlFacetsQueryBuilder
 from keep.api.core.facets_query_builder.postgresql import PostgreSqlFacetsQueryBuilder
 from keep.api.core.facets_query_builder.sqlite import SqliteFacetsHandler
@@ -28,6 +30,10 @@ def get_facets_query_builder_for_dialect(
             properties_metadata, get_cel_to_sql_provider(properties_metadata)
         )
     elif dialect_name == "mysql":
+        if is_doris():
+            return DorisFacetsQueryBuilder(
+                properties_metadata, get_cel_to_sql_provider(properties_metadata)
+            )
         return MySqlFacetsQueryBuilder(
             properties_metadata, get_cel_to_sql_provider(properties_metadata)
         )
