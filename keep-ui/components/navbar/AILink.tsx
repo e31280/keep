@@ -1,6 +1,5 @@
 "use client";
 
-import { Subtitle } from "@tremor/react";
 import { LinkWithIcon } from "components/LinkWithIcon";
 import { RiSparkling2Line } from "react-icons/ri";
 
@@ -37,7 +36,7 @@ export const AILink = () => {
   return (
     <LinkWithIcon href="/ai" icon={RiSparkling2Line} className="w-full">
       <div className="flex justify-between items-center w-full">
-        <Subtitle className="text-xs break-all">{text}</Subtitle>
+        <span className="text-xs text-muted-foreground break-all">{text}</span>
       </div>
     </LinkWithIcon>
   );
